@@ -1,0 +1,4 @@
+#Auto Configure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.zhangblue.hbase.starter.configuration.HbaseAutoConfiguration,\
+com.zhangblue.hbase.starter.tasks.MonitorService
