@@ -17,6 +17,7 @@
         <module>zhangblue-administrator-cache</module>
         <module>zhangblue-administrator-validator</module>
         <module>zhangblue-administrator-webflux</module>
+        <module>zhangblue-administrator-annotation</module>
     </modules>
     <packaging>pom</packaging>
 
