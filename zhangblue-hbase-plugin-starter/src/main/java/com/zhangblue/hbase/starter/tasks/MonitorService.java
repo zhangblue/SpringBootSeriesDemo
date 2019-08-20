@@ -6,12 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import javax.annotation.PostConstruct;
+
 @EnableScheduling
 @Slf4j
 public class MonitorService {
 
   @Autowired
   private HbaseOperation hbaseOperation;
+
+  @PostConstruct
+  public void initHbaseTable() {
+    log.info("create hbase tables");
+  }
 
   /**
    * 每3秒检查一次hbase状态。
