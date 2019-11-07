@@ -1,76 +1,88 @@
 package com.zhangblue.elasticsearch.api;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHost;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.AdminClient;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+
+import org.elasticsearch.client.RestHighLevelClient;
+
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * elasticsearch 连接底层持久化类
+ * @author zhangd
  */
+@Slf4j
 public class ElasticSearchImplement {
 
-  private TransportClient client;
-  private String clusterName = "elasticsearch-cluster";
-  private int port = 9300;
-  private String[] hosts = {"localhost"};
+	private RestHighLevelClient restHighLevelClient;
 
-  public ElasticSearchImplement(String clusterName, int port, String[] hosts) {
-    this.clusterName = clusterName;
-    this.port = port;
-    this.hosts = hosts;
-  }
+	private int port = 9300;
 
-  public void init() throws UnknownHostException {
-    Settings settings = Settings.builder().put("cluster.name", clusterName).build();
-    PreBuiltTransportClient preBuiltTransportClient = new PreBuiltTransportClient(settings);
-    for (String host : hosts) {
-      preBuiltTransportClient.addTransportAddress(new TransportAddress(InetAddress.getByName(host), port));
-    }
-    client = preBuiltTransportClient;
-  }
+	private String[] hosts = { "localhost" };
 
-  public void closeConnect() {
-    client.close();
-  }
+	public ElasticSearchImplement(int port, String[] hosts) {
+		this.port = port;
+		this.hosts = hosts;
+	}
 
-  /**
-   * 获取es admin
-   *
-   * @return
-   */
-  public AdminClient getAdmin() {
-    return client.admin();
-  }
+	public void createElasticSearchConnection() {
+		List<HttpHost> httpHostsList = Arrays.asList(hosts).stream().map(x -> new HttpHost(x, port, "http")).collect(Collectors.toList());
+		HttpHost[] httpHosts = httpHostsList.toArray(new HttpHost[httpHostsList.size()]);
+		restHighLevelClient = new RestHighLevelClient(RestClient.builder(httpHosts));
 
-  /**
-   * get数据
-   *
-   * @param getRequest
-   * @return
-   */
-  public GetResponse getData(GetRequest getRequest) {
-    GetResponse documentFields = client.get(getRequest).actionGet();
-    return documentFields;
-  }
+	}
 
-  /**
-   * search数据
-   *
-   * @param searchRequest
-   * @return
-   */
-  public SearchResponse searchData(SearchRequest searchRequest) {
-    SearchResponse searchResponse = client.search(searchRequest).actionGet();
-    return searchResponse;
-  }
+	public void closeElasticSearchConnection() throws IOException {
+		restHighLevelClient.close();
+	}
 
+
+	/**
+	 * 同步方式get数据
+	 *
+	 * @param getRequest
+	 * @return
+	 */
+	public GetResponse getDataBySync(GetRequest getRequest) throws IOException {
+		GetResponse documentFields = restHighLevelClient.get(getRequest, RequestOptions.DEFAULT);
+		return documentFields;
+	}
+
+	/**
+	 * 异步方式get数据
+	 *
+	 * @param getRequest
+	 * @return
+	 */
+	public void getDataByAsync(GetRequest getRequest, ActionListener<GetResponse> listener) {
+		restHighLevelClient.getAsync(getRequest, RequestOptions.DEFAULT, listener);
+	}
+
+	/**
+	 * search数据
+	 *
+	 * @param searchRequest
+	 * @return
+	 */
+	public SearchResponse searchData(SearchRequest searchRequest) throws IOException {
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		return searchResponse;
+	}
+
+
+	public RestHighLevelClient getRestHighLevelClient() {
+		return restHighLevelClient;
+	}
 }
