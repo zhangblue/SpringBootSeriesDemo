@@ -1,9 +1,11 @@
 package com.zhangblue.hbase.api;
 
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -23,19 +25,22 @@ import java.util.Set;
 @Slf4j
 public class HbaseOperation {
 
-  private HbaseImplement hbaseImplement;
+  private HbaseBasicImplement hbaseBasicImplement;
   private String nameSpace;
 
 
-  public HbaseOperation(HbaseImplement hbaseImplement, String nameSpace) {
-    this.hbaseImplement = hbaseImplement;
+  public HbaseOperation(HbaseBasicImplement hbaseBasicImplement, String nameSpace) {
+    this.hbaseBasicImplement = hbaseBasicImplement;
     this.nameSpace = nameSpace;
   }
 
+  public HbaseBasicImplement getHbaseBasicImplement() {
+    return hbaseBasicImplement;
+  }
 
   public void cloesConnection() {
     try {
-      hbaseImplement.close();
+      hbaseBasicImplement.close();
     } catch (IOException e) {
       log.error("", e);
     }
@@ -58,15 +63,24 @@ public class HbaseOperation {
   }
 
   /**
+   * 获取tablename
+   *
+   * @param tableName
+   * @return
+   */
+  public TableName getTableName(String tableName) {
+    return TableName.valueOf(Bytes.toBytes(nameSpace), Bytes.toBytes(tableName));
+  }
+
+  /**
    * 获取所有rowkey
    *
    * @param tableName
    * @return
    */
-  public List<String> scanRowKeys(String tableName) {
+  public List<String> getAllRowKeys(String tableName) {
     List<String> listResult = new ArrayList<>();
-    Scan scan = new Scan();
-    ResultScanner results = scanHbase(tableName);
+    ResultScanner results = scanHbase(tableName, new Scan());
     results.forEach(x -> listResult.add(Bytes.toString(x.getRow())));
     return listResult;
   }
@@ -77,27 +91,21 @@ public class HbaseOperation {
    * @param tableName 表名
    * @param familyName 列族
    * @param rowKey rowkey
-   * @param strBegin 关键字开头
    * @return
    * @throws IOException
    */
-  public Set<String> getColumnsPrefixByRowKey(String familyName, String rowKey,
-                                              String strBegin, String tableName) {
+  public Set<String> getColumnsByRowKey(String familyName, String rowKey, String tableName) {
     Set<String> setResult = new HashSet<>();
     Get get = new Get(Bytes.toBytes(rowKey)).addFamily(Bytes.toBytes(familyName));
     Result result = null;
     try {
-      result = hbaseImplement.getValue(nameSpace, tableName, get);
+      result = hbaseBasicImplement.getValue(getTableName(tableName), get);
       if (!result.isEmpty()) {
         if (result.rawCells().length > 0) {
           List<Cell> listCell = result.listCells();
-          for (Cell cell : listCell) {
-            String cellName = Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(),
-                cell.getQualifierLength());
-            if (cellName.startsWith(strBegin)) {
-              setResult.add(cellName);
-            }
-          }
+          listCell.forEach(cell -> setResult
+              .add(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(),
+                  cell.getQualifierLength())));
         }
       }
     } catch (IOException e) {
@@ -107,20 +115,23 @@ public class HbaseOperation {
   }
 
   /**
+   * 获取字符串类型数据
+   *
    * @param tableName
-   * @param rowkey
+   * @param rowKey
    * @param family
    * @param column
    * @return
    * @throws IOException
    */
-  public String getStringValueByRowKey(String rowkey, String family, String column, String tableName) {
+  public String getStringValueByRowKey(String rowKey, String family, String column,
+      String tableName) {
     String value = null;
-    Get get = new Get(Bytes.toBytes(rowkey)).addColumn(Bytes.toBytes(family), Bytes.toBytes(column));
-    Result result = null;
+    Get get = new Get(Bytes.toBytes(rowKey))
+        .addColumn(Bytes.toBytes(family), Bytes.toBytes(column));
     try {
-      result = hbaseImplement.getValue(nameSpace, tableName, get);
-      if (result.isEmpty()) {
+      Result result = hbaseBasicImplement.getValue(getTableName(tableName), get);
+      if (result.isEmpty() && null != result.value()) {
         value = Bytes.toString(result.value());
       }
     } catch (IOException e) {
@@ -131,6 +142,8 @@ public class HbaseOperation {
   }
 
   /**
+   * 获取long类型数据
+   *
    * @param tableName
    * @param rowkey
    * @param family
@@ -140,11 +153,11 @@ public class HbaseOperation {
    */
   public long getLongValueByRowKey(String rowkey, String family, String column, String tableName) {
     long value = 0L;
-    Get get = new Get(Bytes.toBytes(rowkey)).addColumn(Bytes.toBytes(family), Bytes.toBytes(column));
-    Result result = null;
+    Get get = new Get(Bytes.toBytes(rowkey))
+        .addColumn(Bytes.toBytes(family), Bytes.toBytes(column));
     try {
-      result = hbaseImplement.getValue(nameSpace, tableName, get);
-      if (result.isEmpty()) {
+      Result result = hbaseBasicImplement.getValue(getTableName(tableName), get);
+      if (result.isEmpty() && null != result.value()) {
         value = Bytes.toLong(result.value());
       }
     } catch (IOException e) {
@@ -155,7 +168,7 @@ public class HbaseOperation {
   }
 
   /**
-   * 查询多条rowkey
+   * 批量查询数据
    *
    * @param rowKeys   rowkey
    * @param family    列族
@@ -163,16 +176,14 @@ public class HbaseOperation {
    * @param tableName 表名
    * @return result
    */
-  public Result[] getColumnValuesByRowKeys(List<String> rowKeys, String family, String column, String tableName) {
-    Result[] results = new Result[0];
-    List<Get> listGet = new ArrayList<>(rowKeys.size());
-    rowKeys.forEach(rowkey -> listGet.add(new Get(Bytes.toBytes(rowkey)).addColumn(Bytes.toBytes(family), Bytes.toBytes(column))));
-    try {
-      results = hbaseImplement.getColumnValuesByRowKeys(nameSpace, tableName, listGet);
-    } catch (IOException e) {
-      log.error("", e);
-    }
-    return results;
+  public Result[] getColumnValuesByRowKeys(List<String> rowKeys, String family, String column,
+      String tableName) {
+    List<Get> getList = rowKeys.stream()
+        .map(x -> new Get(Bytes.toBytes(x)).addColumn(Bytes.toBytes(family), Bytes.toBytes(column)))
+        .collect(
+            Collectors.toList());
+    Result[] columnValuesByRowKeys = getColumnValuesByRowKeys(getList, tableName);
+    return columnValuesByRowKeys;
   }
 
   /**
@@ -183,9 +194,9 @@ public class HbaseOperation {
    * @return result
    */
   public Result[] getColumnValuesByRowKeys(List<Get> listTables, String tableName) {
-    Result[] results = new Result[0];
+    Result[] results = new Result[listTables.size()];
     try {
-      results = hbaseImplement.getColumnValuesByRowKeys(nameSpace, tableName, listTables);
+      results = hbaseBasicImplement.getColumnValuesByRowKeys(getTableName(tableName), listTables);
     } catch (IOException e) {
       log.error("", e);
     }
@@ -197,27 +208,27 @@ public class HbaseOperation {
    * 根据删除hbase中setColumns的列
    */
   public boolean deleteColumnByRowKey(String rowKey,
-                                      String familyName, Set<String> setColumns, String tableName) {
-    boolean result = false;
+      String familyName, Set<String> setColumns, String tableName) {
     Delete delete = new Delete(Bytes.toBytes(rowKey));
-    setColumns.forEach(column -> delete.addColumns(Bytes.toBytes(familyName), Bytes.toBytes(column)));
-    try {
-      hbaseImplement.deleteByRowKey(nameSpace, tableName, delete);
-      result = true;
-    } catch (IOException e) {
-      log.error("", e);
-    }
-    return result;
+    setColumns
+        .forEach(column -> delete.addColumns(Bytes.toBytes(familyName), Bytes.toBytes(column)));
+    return deleteData(tableName, delete);
   }
 
   /**
    * 删除某个rowkey
    */
   public boolean deleteRowKey(String tableName, String rowKey) {
-    boolean result = false;
     Delete delete = new Delete(Bytes.toBytes(rowKey));
+    return deleteData(tableName, delete);
+  }
+
+  public boolean deleteRowKeys(String tableName, Set<String> rowKeys) {
+    boolean result = false;
+    List<Delete> listDelete = new ArrayList<>(rowKeys.size());
+    rowKeys.forEach(rowkey -> listDelete.add(new Delete(Bytes.toBytes(rowkey))));
     try {
-      hbaseImplement.deleteByRowKey(nameSpace, tableName, delete);
+      hbaseBasicImplement.deleteByRowKey(getTableName(tableName), listDelete);
       result = true;
     } catch (IOException e) {
       log.error("", e);
@@ -225,18 +236,17 @@ public class HbaseOperation {
     return result;
   }
 
-  public boolean deleteRowKey(String tableName, Set<String> rowKeys) {
+  public boolean deleteData(String tableName, Delete delete) {
     boolean result = false;
-    List<Delete> listDelete = new ArrayList<>(rowKeys.size());
-    rowKeys.forEach(rowkey -> listDelete.add(new Delete(Bytes.toBytes(rowkey))));
     try {
-      hbaseImplement.deleteByRowKey(nameSpace, tableName, listDelete);
+      hbaseBasicImplement.deleteByRowKey(getTableName(tableName), delete);
       result = true;
     } catch (IOException e) {
       log.error("", e);
     }
     return result;
   }
+
 
   /**
    * 添加数据
@@ -246,11 +256,11 @@ public class HbaseOperation {
    * @param column    列名
    * @param value     值
    */
-  public void putHbaseData(String rowKey, String tableName,
-                           String familyName,
-                           String[] column,
-                           String[] value) {
-    putHbaseData(rowKey, familyName, column, value, tableName, Durability.USE_DEFAULT);
+  public void putData(String rowKey, String tableName,
+      String familyName,
+      String[] column,
+      String[] value) {
+    putData(rowKey, familyName, column, value, tableName, Durability.USE_DEFAULT);
   }
 
   /**
@@ -262,10 +272,10 @@ public class HbaseOperation {
    * @param column     列名
    * @param value      值
    */
-  public void putHbaseData(String rowKey,
-                           String familyName,
-                           String[] column,
-                           String[] value, String tableName, Durability durability) {
+  public void putData(String rowKey,
+      String familyName,
+      String[] column,
+      String[] value, String tableName, Durability durability) {
     Put put = new Put(Bytes.toBytes(rowKey));
     for (int j = 0; j < column.length; j++) {
       put.addColumn(Bytes.toBytes(familyName), Bytes.toBytes(column[j]),
@@ -273,7 +283,7 @@ public class HbaseOperation {
     }
     put.setDurability(durability);
     try {
-      hbaseImplement.putDataToHbase(nameSpace, tableName, put);
+      hbaseBasicImplement.putDataToHbase(getTableName(tableName), put);
     } catch (IOException e) {
       log.error("", e);
     }
@@ -288,8 +298,9 @@ public class HbaseOperation {
    * @param column     列名
    * @param value      值
    */
-  public void putHbaseData(String rowKey, String tableName, String familyName, String column, String value) {
-    putHbaseData(rowKey, tableName, familyName, column, value, Durability.USE_DEFAULT);
+  public void putData(String rowKey, String tableName, String familyName, String column,
+      String value) {
+    putData(rowKey, tableName, familyName, column, value, Durability.USE_DEFAULT);
   }
 
   /**
@@ -302,12 +313,13 @@ public class HbaseOperation {
    * @param value      值
    * @param durability 入库策略
    */
-  public void putHbaseData(String rowKey, String tableName, String familyName, String column, String value, Durability durability) {
+  public void putData(String rowKey, String tableName, String familyName, String column,
+      String value, Durability durability) {
     Put put = new Put(Bytes.toBytes(rowKey));
     put.setDurability(durability);
     put.addColumn(Bytes.toBytes(familyName), Bytes.toBytes(column), Bytes.toBytes(value));
     try {
-      hbaseImplement.putDataToHbase(nameSpace, tableName, put);
+      hbaseBasicImplement.putDataToHbase(getTableName(tableName), put);
     } catch (IOException e) {
       log.error("", e);
     }
@@ -320,8 +332,8 @@ public class HbaseOperation {
    * @param tableName 表名
    * @param putList   put列表
    */
-  public void putHbaseData(String tableName, List<Put> putList) throws IOException {
-    hbaseImplement.putDataToHbase(nameSpace, tableName, putList);
+  public void putData(String tableName, List<Put> putList) throws IOException {
+    hbaseBasicImplement.putDataToHbase(getTableName(tableName), putList);
   }
 
   /**
@@ -330,25 +342,19 @@ public class HbaseOperation {
    * @param tableName 表名
    * @param put       put内容
    */
-  public void putHbaseData(String tableName, Put put) throws IOException {
-    hbaseImplement.putDataToHbase(nameSpace, tableName, put);
+  public void putData(String tableName, Put put) throws IOException {
+    hbaseBasicImplement.putDataToHbase(getTableName(tableName), put);
   }
 
   /**
-   * scan得到所有rowkey
+   * scan数据
    *
    * @param tableName 表名
    * @return 返回的rowkey名
    */
-  public ResultScanner scanHbase(String tableName) {
-    ResultScanner resultsScanner = null;
-    try {
-      Scan scan = new Scan();
-      resultsScanner = hbaseImplement.scanHbase(nameSpace, tableName, scan);
-    } catch (IOException e) {
-      log.error("", e);
-    }
-    return resultsScanner;
+  public ResultScanner scanTableByRowKeyRange(String tableName, String startKey, String stopKey) {
+    Scan scan = new Scan(Bytes.toBytes(startKey), Bytes.toBytes(stopKey));
+    return scanHbase(tableName, scan);
   }
 
   /**
@@ -356,16 +362,19 @@ public class HbaseOperation {
    *
    * @create by renal
    */
-  public ResultScanner scanHbase(String tableName, String rowPrefix) {
-    ResultScanner resultScanner = null;
+  public ResultScanner scanHbaseByRowKeyPrefix(String tableName, String rowPrefix) {
+    Scan scan = new Scan().setRowPrefixFilter(Bytes.toBytes(rowPrefix));
+    return scanHbase(tableName, scan);
+  }
+
+  public ResultScanner scanHbase(String tableName, Scan scan) {
+    ResultScanner results = null;
     try {
-      Scan scan = new Scan();
-      scan.setRowPrefixFilter(Bytes.toBytes(rowPrefix));
-      resultScanner = hbaseImplement.scanHbase(nameSpace, tableName, scan);
+      results = hbaseBasicImplement.scanHbase(getTableName(tableName), scan);
     } catch (IOException e) {
       log.error("", e);
     }
-    return resultScanner;
+    return results;
   }
 
 
@@ -374,32 +383,35 @@ public class HbaseOperation {
    *
    * @create by renal
    */
-  public ResultScanner scanHbase(String tableName, String rowPrefix, SingleColumnValueFilter filter) {
+  public ResultScanner scanHbaseByRowKeyPrefixFilter(String tableName, String rowPrefix,
+      SingleColumnValueFilter filter) {
     ResultScanner resultScanner = null;
     try {
       Scan scan = new Scan();
       scan.setRowPrefixFilter(Bytes.toBytes(rowPrefix));
       scan.setFilter(filter);
-      resultScanner = hbaseImplement.scanHbase(nameSpace, tableName, scan);
+      resultScanner = hbaseBasicImplement.scanHbase(getTableName(tableName), scan);
     } catch (IOException e) {
       log.error("", e);
     }
     return resultScanner;
   }
 
+
   /**
    * 创建hbase表
    *
-   * @param tableName 表名
-   * @param family    列族
+   * @param table  表名
+   * @param family 列族
    */
-  public boolean createHbaseTable(String tableName, String family) {
+  public boolean createTable(String table, String family) {
     boolean result = false;
     try {
-      if (hbaseImplement.tableExists(nameSpace, tableName)) {
+      TableName tableName = getTableName(table);
+      if (hbaseBasicImplement.tableExists(tableName)) {
         result = true;
       } else {
-        hbaseImplement.createHbaseTable(nameSpace, tableName, new HColumnDescriptor(family));
+        hbaseBasicImplement.createHbaseTable(tableName, new HColumnDescriptor(family));
         result = true;
       }
     } catch (IOException e) {
@@ -411,13 +423,14 @@ public class HbaseOperation {
   /**
    * 创建hbase表
    *
-   * @param tableName 表名
-   * @param families  列族
+   * @param table    表名
+   * @param families 列族
    */
-  public boolean createHbaseTable(String tableName, String[] families) {
+  public boolean createTable(String table, String[] families) {
     boolean result = false;
     try {
-      if (hbaseImplement.tableExists(nameSpace, tableName)) {
+      TableName tableName = getTableName(table);
+      if (hbaseBasicImplement.tableExists(tableName)) {
         result = true;
       } else {
         int leg = families.length;
@@ -425,7 +438,7 @@ public class HbaseOperation {
         for (int i = 0; i < leg; i++) {
           hColumnDescriptors[i] = new HColumnDescriptor(families[i]);
         }
-        hbaseImplement.createHbaseTable(nameSpace, tableName, hColumnDescriptors);
+        hbaseBasicImplement.createHbaseTable(tableName, hColumnDescriptors);
         result = true;
       }
     } catch (IOException e) {
@@ -437,20 +450,20 @@ public class HbaseOperation {
 
   /***
    * 创建有数据生命周期的hbase表
-   * @param tableName 表名
+   * @param table 表名
    * @param families 列族名
    * @param ttlTimes 存活时间(秒)
    * @throws Exception
    */
-  public boolean createHbaseTable(String tableName, String[] families, int[] ttlTimes) {
+  public boolean createTable(String table, String[] families, int[] ttlTimes) {
     boolean flage = false;
     if (families.length == ttlTimes.length && families.length != 0) {
       try {
-        if (hbaseImplement.tableExists(nameSpace, tableName)) {
+        TableName tableName = getTableName(table);
+        if (hbaseBasicImplement.tableExists(tableName)) {
           log.info("hbase table [{}] exist!", tableName);
           flage = true;
         } else {
-
           HColumnDescriptor[] hColumnDescriptors = new HColumnDescriptor[families.length];
           for (int i = 0; i < families.length; i++) {
             HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(families[i]);
@@ -459,7 +472,7 @@ public class HbaseOperation {
             }
             hColumnDescriptors[i] = hColumnDescriptor;
           }
-          hbaseImplement.createHbaseTable(nameSpace, tableName, hColumnDescriptors);
+          hbaseBasicImplement.createHbaseTable(tableName, hColumnDescriptors);
           flage = true;
         }
       } catch (IOException e) {
@@ -471,20 +484,21 @@ public class HbaseOperation {
 
   /***
    * 创建有数据生命周期的hbase表
-   * @param tableName 表名
+   * @param table 表名
    * @param family 列族名
    * @param ttlTimes 存活时间(秒)
    * @throws Exception
    */
-  public boolean createHbaseTable(String tableName, String family, int ttlTimes) {
+  public boolean createHbaseTable(String table, String family, int ttlTimes) {
     boolean flage = false;
     try {
-      if (hbaseImplement.tableExists(nameSpace, tableName)) {
+      TableName tableName = getTableName(table);
+      if (hbaseBasicImplement.tableExists(tableName)) {
         log.info("hbase table [{}] exist!", tableName);
         flage = true;
       } else {
         HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(family).setTimeToLive(ttlTimes);
-        hbaseImplement.createHbaseTable(nameSpace, tableName, hColumnDescriptor);
+        hbaseBasicImplement.createHbaseTable(tableName, hColumnDescriptor);
         flage = true;
       }
     } catch (IOException e) {
@@ -502,7 +516,7 @@ public class HbaseOperation {
   public boolean tableExists(String tableName) {
     boolean result = false;
     try {
-      result = hbaseImplement.tableExists(nameSpace, tableName);
+      result = hbaseBasicImplement.tableExists(getTableName(tableName));
     } catch (IOException e) {
       log.error("", e);
     }
@@ -517,7 +531,7 @@ public class HbaseOperation {
   public boolean tableExists(Admin admin, String tableName) {
     boolean result = false;
     try {
-      result = hbaseImplement.tableExists(nameSpace, tableName, admin);
+      result = hbaseBasicImplement.tableExists(getTableName(tableName), admin);
     } catch (IOException e) {
       log.error("", e);
     }
@@ -525,7 +539,7 @@ public class HbaseOperation {
   }
 
   public Admin getAdmin() throws IOException {
-    Admin admin = hbaseImplement.getAdmin();
+    Admin admin = hbaseBasicImplement.getAdmin();
     return admin;
   }
 
@@ -555,7 +569,7 @@ public class HbaseOperation {
   public HTableDescriptor[] listTables(Admin admin) {
     HTableDescriptor[] hTableDescriptors = null;
     try {
-      hTableDescriptors = hbaseImplement.listTables(admin);
+      hTableDescriptors = hbaseBasicImplement.listTables(admin);
     } catch (IOException e) {
       log.error("", e);
     }

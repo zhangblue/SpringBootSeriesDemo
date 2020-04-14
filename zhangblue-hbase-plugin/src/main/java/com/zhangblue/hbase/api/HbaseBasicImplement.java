@@ -12,22 +12,32 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+/**
+ * hbase基本操作
+ *
+ * @author zhangdi
+ */
 @Slf4j
-public class HbaseImplement {
+public class HbaseBasicImplement {
 
   private Connection connection;
 
+  public Connection getConnection() {
+    return connection;
+  }
+
   /**
-   * 初始化
+   * 初始化hbase链接
    *
    * @throws IOException
    */
-  public void init() throws IOException {
+  public void initializationConnection() throws IOException {
     Path configPath = Paths.get(System.getProperty("user.dir")).resolve("config");
     Configuration configuration = new Configuration();
-    configuration.addResource(new org.apache.hadoop.fs.Path(configPath.resolve("hbase-site.xml").toString()));
-    configuration.addResource(new org.apache.hadoop.fs.Path(configPath.resolve("core-site.xml").toString()));
-
+    configuration.addResource(
+        new org.apache.hadoop.fs.Path(configPath.resolve("hbase-site.xml").toString()));
+    configuration
+        .addResource(new org.apache.hadoop.fs.Path(configPath.resolve("core-site.xml").toString()));
     connection = ConnectionFactory.createConnection(configuration);
   }
 
@@ -36,13 +46,8 @@ public class HbaseImplement {
     connection.close();
   }
 
-
-  public TableName getTableName(String nameSpace, String tableName) {
-    return TableName.valueOf(nameSpace, tableName);
-  }
-
-  public Table getTable(String nameSpace, String tableName) throws IOException {
-    return connection.getTable(getTableName(nameSpace, tableName));
+  public Table getTable(TableName tableName) throws IOException {
+    return connection.getTable(tableName);
   }
 
   public Admin getAdmin() throws IOException {
@@ -52,12 +57,11 @@ public class HbaseImplement {
   /**
    * 查询数据
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param get       get
    */
-  public Result getValue(String nameSpace, String tableName, Get get) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public Result getValue(TableName tableName, Get get) throws IOException {
+    Table table = getTable(tableName);
     Result result = table.get(get);
     table.close();
     return result;
@@ -67,14 +71,15 @@ public class HbaseImplement {
   /**
    * 查询多条rowkey
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param listGet   get list
    * @return result
    */
-  public Result[] getColumnValuesByRowKeys(String nameSpace, String tableName, List<Get> listGet) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public Result[] getColumnValuesByRowKeys(TableName tableName, List<Get> listGet)
+      throws IOException {
+    Table table = getTable(tableName);
     Result[] results = table.get(listGet);
+    table.close();
     return results;
   }
 
@@ -82,27 +87,26 @@ public class HbaseImplement {
   /**
    * 根据删除hbase中setColumns的列
    *
-   * @param nameSpace  命名空间
-   * @param tableName  表名
-   * @param listDelete delete list
+   * @param tableName 表名
+   * @param deletes   delete
    * @throws IOException
    */
-  public void deleteByRowKey(String nameSpace, String tableName, List<Delete> listDelete) throws IOException {
-    Table table = getTable(nameSpace, tableName);
-    table.delete(listDelete);
+  public void deleteByRowKey(TableName tableName, List<Delete> deletes) throws IOException {
+    Table table = getTable(tableName);
+    table.delete(deletes);
     table.close();
   }
+
 
   /**
    * 根据删除hbase中setColumns的列
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param delete    delete
    * @throws IOException
    */
-  public void deleteByRowKey(String nameSpace, String tableName, Delete delete) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public void deleteByRowKey(TableName tableName, Delete delete) throws IOException {
+    Table table = getTable(tableName);
     table.delete(delete);
     table.close();
   }
@@ -110,12 +114,11 @@ public class HbaseImplement {
   /**
    * 添加数据
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param put       put
    */
-  public void putDataToHbase(String nameSpace, String tableName, Put put) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public void putDataToHbase(TableName tableName, Put put) throws IOException {
+    Table table = getTable(tableName);
     table.put(put);
     table.close();
   }
@@ -123,12 +126,12 @@ public class HbaseImplement {
   /**
    * 添加数据
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param putList   put list
    */
-  public void putDataToHbase(String nameSpace, String tableName, List<Put> putList) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public void putDataToHbase(TableName tableName, List<Put> putList)
+      throws IOException {
+    Table table = getTable(tableName);
     table.put(putList);
     table.close();
   }
@@ -137,13 +140,12 @@ public class HbaseImplement {
   /**
    * scan hbase表
    *
-   * @param nameSpace 命名空间
    * @param tableName 表名
    * @param scan      scan
    * @return
    */
-  public ResultScanner scanHbase(String nameSpace, String tableName, Scan scan) throws IOException {
-    Table table = getTable(nameSpace, tableName);
+  public ResultScanner scanHbase(TableName tableName, Scan scan) throws IOException {
+    Table table = getTable(tableName);
     ResultScanner resultsScanner = table.getScanner(scan);
     return resultsScanner;
   }
@@ -152,14 +154,14 @@ public class HbaseImplement {
   /**
    * 创建hbase表
    *
-   * @param nameSpace         命名空间
    * @param tableName         表名
    * @param hColumnDescriptor hColumnDescriptor
    */
-  public void createHbaseTable(String nameSpace, String tableName, HColumnDescriptor hColumnDescriptor) throws IOException {
-    HTableDescriptor table = new HTableDescriptor(getTableName(nameSpace, nameSpace));
+  public void createHbaseTable(TableName tableName,
+      HColumnDescriptor hColumnDescriptor) throws IOException {
+    HTableDescriptor table = new HTableDescriptor(tableName);
     Admin admin = connection.getAdmin();
-    if (tableExists(nameSpace, tableName, admin)) {
+    if (tableExists(tableName, admin)) {
 
     } else {
       table.addFamily(hColumnDescriptor);
@@ -170,14 +172,14 @@ public class HbaseImplement {
   /**
    * 创建hbase表
    *
-   * @param nameSpace          命名空间
    * @param tableName          表名
    * @param hColumnDescriptors hColumnDescriptors
    */
-  public void createHbaseTable(String nameSpace, String tableName, HColumnDescriptor[] hColumnDescriptors) throws IOException {
-    HTableDescriptor table = new HTableDescriptor(getTableName(nameSpace, tableName));
+  public void createHbaseTable(TableName tableName,
+      HColumnDescriptor[] hColumnDescriptors) throws IOException {
+    HTableDescriptor table = new HTableDescriptor(tableName);
     Admin admin = getAdmin();
-    if (tableExists(nameSpace, tableName, admin)) {
+    if (tableExists(tableName, admin)) {
     } else {
       for (HColumnDescriptor hColumnDescriptor : hColumnDescriptors) {
         table.addFamily(hColumnDescriptor);
@@ -191,9 +193,9 @@ public class HbaseImplement {
    *
    * @param tableName 表名
    */
-  public boolean tableExists(String nameSpace, String tableName) throws IOException {
+  public boolean tableExists(TableName tableName) throws IOException {
     Admin admin = getAdmin();
-    return tableExists(nameSpace, tableName, admin);
+    return tableExists(tableName, admin);
   }
 
   /**
@@ -201,8 +203,8 @@ public class HbaseImplement {
    *
    * @param tableName 表名
    */
-  public boolean tableExists(String nameSpace, String tableName, Admin admin) throws IOException {
-    return admin.tableExists(getTableName(nameSpace, tableName));
+  public boolean tableExists(TableName tableName, Admin admin) throws IOException {
+    return admin.tableExists(tableName);
   }
 
 
