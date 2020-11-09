@@ -18,6 +18,8 @@
     <module>zhangblue-administrator-validator</module>
     <module>zhangblue-administrator-webflux</module>
     <module>zhangblue-administrator-annotation</module>
+    <module>zhangblue-jpa-plugin-starter</module>
+    <module>zhangblue-administrator-kafka</module>
   </modules>
   <packaging>pom</packaging>
 
@@ -40,7 +42,7 @@
         <!-- Import dependency management from Spring Boot -->
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.1.7.RELEASE</version>
+        <version>2.3.4.RELEASE</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
