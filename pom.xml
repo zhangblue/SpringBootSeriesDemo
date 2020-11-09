@@ -15,13 +15,20 @@
     <module>zhangblue-administrator-connection</module>
     <module>zhangblue-zookeeper-plugin</module>
     <module>zhangblue-administrator-cache</module>
-    <module>zhangblue-administrator-validator</module>
     <module>zhangblue-administrator-webflux</module>
     <module>zhangblue-administrator-annotation</module>
     <module>zhangblue-jpa-plugin-starter</module>
     <module>zhangblue-administrator-kafka</module>
+    <module>zhangblue-administrator-validator</module>
   </modules>
   <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.3.5.RELEASE</version>
+    <relativePath/> <!-- lookup parent from repository -->
+  </parent>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -38,14 +45,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <!-- Import dependency management from Spring Boot -->
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.3.4.RELEASE</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
 
       <dependency>
         <groupId>org.springframework.data</groupId>
@@ -54,7 +53,6 @@
         <scope>import</scope>
         <type>pom</type>
       </dependency>
-
 
       <dependency>
         <groupId>com.alibaba</groupId>
