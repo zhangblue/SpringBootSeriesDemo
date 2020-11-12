@@ -20,6 +20,7 @@
     <module>zhangblue-jpa-plugin-starter</module>
     <module>zhangblue-administrator-kafka</module>
     <module>zhangblue-administrator-validator</module>
+    <module>zhangblue-administerator-bean-post-processor</module>
   </modules>
   <packaging>pom</packaging>
 
@@ -150,6 +151,24 @@
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
         <version>42.2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.zhangblue</groupId>
+        <artifactId>zhangblue-hbase-plugin</artifactId>
+        <version>${hbase-plugin.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.zhangblue</groupId>
+        <artifactId>zhangblue-elasticsearch-plugin</artifactId>
+        <version>${elasticsearch-plugin.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.zhangblue</groupId>
+        <artifactId>zhangblue-hbase-plugin-starter</artifactId>
+        <version>${hbase-plugin-starter.version}</version>
       </dependency>
 
 

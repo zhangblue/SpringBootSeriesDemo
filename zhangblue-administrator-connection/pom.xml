@@ -53,7 +53,6 @@
         <dependency>
             <groupId>com.zhangblue</groupId>
             <artifactId>zhangblue-hbase-plugin-starter</artifactId>
-            <version>${hbase-plugin-starter.version}</version>
         </dependency>
 
         <dependency>

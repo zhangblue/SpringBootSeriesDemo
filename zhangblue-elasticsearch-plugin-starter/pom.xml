@@ -26,7 +26,6 @@
         <dependency>
             <groupId>com.zhangblue</groupId>
             <artifactId>zhangblue-elasticsearch-plugin</artifactId>
-            <version>${elasticsearch-plugin.version}</version>
         </dependency>
     </dependencies>
 
