@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/controller/commodity")
 public class CommodityController {
 
-    @Autowired
-    private CommodityService commodityService;
+  @Autowired
+  private CommodityService commodityService;
 
-    @GetMapping(value = "/getCommodityById")
-    public Commodity getCommodity(Integer id) {
-        Commodity commodityById = commodityService.getCommodityById(id);
-        return commodityById;
-    }
+  @GetMapping(value = "/getCommodityById")
+  public Commodity getCommodity(Integer id) {
+    Commodity commodityById = commodityService.getCommodityById(id);
+    return commodityById;
+  }
 
 }
