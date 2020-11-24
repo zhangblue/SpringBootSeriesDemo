@@ -2,7 +2,10 @@ package com.zhangblue.administrator.cache.configuration;
 
 import com.zhangblue.administrator.cache.model.Commodity;
 import com.zhangblue.administrator.cache.model.User;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -23,14 +26,16 @@ import java.net.UnknownHostException;
  * @Date 2019/04/16 16:08
  **/
 @Configuration
-public class MyRedisConfig {
+public class RedisCacheConfig {
 
   @Bean(value = "userRedisTemplate")
   @Qualifier
-  public RedisTemplate<Object, User> userRedisTemplate(RedisConnectionFactory redisConnectionFactory) throws UnknownHostException {
+  public RedisTemplate<Object, User> userRedisTemplate(
+      RedisConnectionFactory redisConnectionFactory) throws UnknownHostException {
     RedisTemplate<Object, User> template = new RedisTemplate<>();
     template.setConnectionFactory(redisConnectionFactory);
-    Jackson2JsonRedisSerializer<User> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<User>(User.class);
+    Jackson2JsonRedisSerializer<User> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<User>(
+        User.class);
     template.setDefaultSerializer(userJackson2JsonRedisSerializer);
     return template;
   }
@@ -38,23 +43,41 @@ public class MyRedisConfig {
   @Primary
   @Bean(name = "userRedisCacheManager")
   public RedisCacheManager userCacheManager(RedisConnectionFactory redisConnectionFactory) {
-    RedisCacheWriter redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory);
+    RedisCacheWriter redisCacheWriter = RedisCacheWriter
+        .nonLockingRedisCacheWriter(redisConnectionFactory);
 
-    Jackson2JsonRedisSerializer<User> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(User.class);
-    RedisSerializationContext.SerializationPair<User> pair = RedisSerializationContext.SerializationPair.fromSerializer(userJackson2JsonRedisSerializer);
-    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig().serializeValuesWith(pair);
+    Jackson2JsonRedisSerializer<User> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+        User.class);
+    RedisSerializationContext.SerializationPair<User> pair = RedisSerializationContext.SerializationPair
+        .fromSerializer(userJackson2JsonRedisSerializer);
+    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+        .serializeValuesWith(pair);
     RedisCacheManager cacheManager = new RedisCacheManager(redisCacheWriter, defaultCacheConfig);
     return cacheManager;
   }
 
   @Bean(name = "commodityRedisCacheManager")
   public RedisCacheManager commodityCacheManager(RedisConnectionFactory redisConnectionFactory) {
-    RedisCacheWriter redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory);
-    Jackson2JsonRedisSerializer<Commodity> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Commodity.class);
-    RedisSerializationContext.SerializationPair<Commodity> pair = RedisSerializationContext.SerializationPair.fromSerializer(userJackson2JsonRedisSerializer);
-    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig().serializeValuesWith(pair);
+    RedisCacheWriter redisCacheWriter = RedisCacheWriter
+        .nonLockingRedisCacheWriter(redisConnectionFactory);
+    Jackson2JsonRedisSerializer<Commodity> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+        Commodity.class);
+    RedisSerializationContext.SerializationPair<Commodity> pair = RedisSerializationContext.SerializationPair
+        .fromSerializer(userJackson2JsonRedisSerializer);
+    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+        .serializeValuesWith(pair);
     RedisCacheManager cacheManager = new RedisCacheManager(redisCacheWriter, defaultCacheConfig);
     return cacheManager;
+  }
+
+  @Bean(name = "myKeyGenerator")
+  public KeyGenerator keyGenerator() {
+    return new KeyGenerator() {
+      @Override
+      public Object generate(Object target, Method method, Object... params) {
+        return method.getName() + "[" + Arrays.asList(params).toString() + "]";
+      }
+    };
   }
 }
 
