@@ -8,8 +8,11 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 
+/**
+ * @author zhangdi
+ */
 @Configuration
-public class MyCacheConfig {
+public class MyCacheKeyGenerator {
 
     @Bean(name = "myKeyGenerator")
     public KeyGenerator keyGenerator() {

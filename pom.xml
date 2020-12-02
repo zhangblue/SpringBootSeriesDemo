@@ -48,14 +48,6 @@
     <dependencies>
 
       <dependency>
-        <groupId>org.springframework.data</groupId>
-        <artifactId>spring-data-releasetrain</artifactId>
-        <version>Lovelace-SR10</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-
-      <dependency>
         <groupId>com.alibaba</groupId>
         <artifactId>fastjson</artifactId>
         <version>1.2.58</version>
@@ -170,7 +162,6 @@
         <artifactId>zhangblue-hbase-plugin-starter</artifactId>
         <version>${hbase-plugin-starter.version}</version>
       </dependency>
-
 
     </dependencies>
   </dependencyManagement>
