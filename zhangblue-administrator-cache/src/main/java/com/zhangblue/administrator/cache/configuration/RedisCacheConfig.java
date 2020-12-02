@@ -4,7 +4,10 @@ import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
 import com.zhangblue.administrator.cache.model.Commodity;
 import com.zhangblue.administrator.cache.model.User;
 import java.time.Duration;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -25,9 +28,9 @@ import java.net.UnknownHostException;
  * @Date 2019/04/16 16:08
  **/
 @Configuration
-public class MyRedisConfig {
+public class RedisCacheConfig {
 
-//  @Bean(value = "userRedisTemplate")
+  //  @Bean(value = "userRedisTemplate")
   public RedisTemplate<Object, User> userRedisTemplate(
       RedisConnectionFactory redisConnectionFactory) throws UnknownHostException {
     RedisTemplate<Object, User> template = new RedisTemplate<>();
@@ -38,7 +41,7 @@ public class MyRedisConfig {
     return template;
   }
 
-//  @Bean(name = "userRedisCacheManager")
+  //  @Bean(name = "userRedisCacheManager")
   public RedisCacheManager userCacheManager(RedisConnectionFactory redisConnectionFactory) {
     RedisCacheWriter redisCacheWriter = RedisCacheWriter
         .nonLockingRedisCacheWriter(redisConnectionFactory);
@@ -65,6 +68,16 @@ public class MyRedisConfig {
             Duration.ofHours(1)).serializeValuesWith(pair);
     RedisCacheManager cacheManager = new RedisCacheManager(redisCacheWriter, defaultCacheConfig);
     return cacheManager;
+  }
+
+  @Bean(name = "myKeyGenerator")
+  public KeyGenerator keyGenerator() {
+    return new KeyGenerator() {
+      @Override
+      public Object generate(Object target, Method method, Object... params) {
+        return method.getName() + "[" + Arrays.asList(params).toString() + "]";
+      }
+    };
   }
 }
 
