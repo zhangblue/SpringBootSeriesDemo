@@ -1,16 +1,14 @@
 package com.zhangblue.administrator.cache.configuration;
 
-import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
 import com.zhangblue.administrator.cache.model.Commodity;
 import com.zhangblue.administrator.cache.model.User;
-import java.time.Duration;
 import java.lang.reflect.Method;
+import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Arrays;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
@@ -18,8 +16,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-
-import java.net.UnknownHostException;
 
 /**
  * @ClassName MyRedisConfig
@@ -57,6 +53,7 @@ public class RedisCacheConfig {
 
   @Bean(name = "commodityRedisCacheManager")
   public RedisCacheManager commodityCacheManager(RedisConnectionFactory redisConnectionFactory) {
+
     RedisCacheWriter redisCacheWriter = RedisCacheWriter
         .nonLockingRedisCacheWriter(redisConnectionFactory);
     Jackson2JsonRedisSerializer<Commodity> userJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(

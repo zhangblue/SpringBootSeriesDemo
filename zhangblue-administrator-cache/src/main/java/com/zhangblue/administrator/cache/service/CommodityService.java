@@ -2,14 +2,9 @@ package com.zhangblue.administrator.cache.service;
 
 import com.zhangblue.administrator.cache.model.Commodity;
 import com.zhangblue.administrator.cache.model.SimulationDB;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.Cache;
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.stereotype.Service;
 
 @Service

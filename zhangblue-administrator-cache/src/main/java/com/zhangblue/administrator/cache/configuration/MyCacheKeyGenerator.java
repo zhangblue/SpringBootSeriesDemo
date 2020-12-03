@@ -1,11 +1,9 @@
 package com.zhangblue.administrator.cache.configuration;
 
-import org.springframework.cache.interceptor.KeyGenerator;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import org.springframework.cache.interceptor.KeyGenerator;
+import org.springframework.context.annotation.Configuration;
 
 
 /**
@@ -14,7 +12,7 @@ import java.util.Arrays;
 @Configuration
 public class MyCacheKeyGenerator {
 
-    @Bean(name = "myKeyGenerator")
+//    @Bean(name = "myKeyGenerator")
     public KeyGenerator keyGenerator() {
         return new KeyGenerator() {
             @Override
