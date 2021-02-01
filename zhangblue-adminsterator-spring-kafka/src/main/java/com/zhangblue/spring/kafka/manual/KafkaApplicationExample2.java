@@ -21,7 +21,7 @@ import org.springframework.kafka.support.Acknowledgment;
 
 /**
  * @author zhangdi
- * @description: AckModel MANUAL
+ * @description: AckModel MANUAL 消费模式参见：https://blog.csdn.net/qq330983778/article/details/105937689/
  * @date 2021/2/1 下午8:07
  * @since v1.0
  **/
