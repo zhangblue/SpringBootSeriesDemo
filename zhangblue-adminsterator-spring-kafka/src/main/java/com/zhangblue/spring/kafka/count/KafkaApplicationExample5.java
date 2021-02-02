@@ -18,7 +18,7 @@ import org.springframework.kafka.listener.ContainerProperties.AckMode;
 
 /**
  * @author zhangdi
- * @description: AckModel Time
+ * @description: AckModel COUNT
  * <p>
  * 此模式会在监听器监听到消息等于AckCount的数量提交消费请求。
  * <p>

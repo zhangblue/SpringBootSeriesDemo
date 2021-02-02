@@ -67,7 +67,7 @@ public class ElasticSearchImplement {
 	 * @return
 	 */
 	public void getDataByAsync(GetRequest getRequest, ActionListener<GetResponse> listener) {
-		restHighLevelClient.getAsync(getRequest, RequestOptions.DEFAULT, listener);
+		//restHighLevelClient.getAsync(getRequest, RequestOptions.DEFAULT, listener);
 	}
 
 	/**
