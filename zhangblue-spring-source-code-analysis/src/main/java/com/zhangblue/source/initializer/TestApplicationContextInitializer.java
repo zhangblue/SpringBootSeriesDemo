@@ -1,4 +1,4 @@
-package com.zhangblue.admin.init;
+package com.zhangblue.source.initializer;
 
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;

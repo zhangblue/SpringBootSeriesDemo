@@ -1,6 +1,6 @@
-package com.zhangblue.admin.test.config;
+package com.zhangblue.source.analysis.config;
 
-import com.zhangblue.admin.test.beans.Bean2;
+import com.zhangblue.source.analysis.beans.Bean2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

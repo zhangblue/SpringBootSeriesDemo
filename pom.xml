@@ -24,10 +24,10 @@
     <module>zhangblue-adminsterator-spring-kafka</module>
     <module>zhangblue-adminsterator-spring-data-elasticsearch7</module>
     <module>zhangblue-adminsterator-spring-data-elasticsearch6</module>
-    <module>zhangblue-spring-boot-test</module>
     <module>zhangblue-adminsterator-bean-ordered</module>
     <module>zhangblue-administerator-rest-template</module>
     <module>zhangblue-administerator-elasticsearch6</module>
+    <module>zhangblue-spring-source-code-analysis</module>
   </modules>
   <packaging>pom</packaging>
 

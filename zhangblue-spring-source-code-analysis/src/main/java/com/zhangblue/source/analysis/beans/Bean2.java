@@ -1,4 +1,4 @@
-package com.zhangblue.admin.test.beans;
+package com.zhangblue.source.analysis.beans;
 
 /**
  * @author zhangdi

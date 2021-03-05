@@ -1,7 +1,7 @@
 #Auto Configure
 
 org.springframework.context.ApplicationContextInitializer=\
-com.zhangblue.admin.init.TestApplicationContextInitializer
+com.zhangblue.source.initializer.TestApplicationContextInitializer
 
 org.springframework.context.ApplicationListener=\
-com.zhangblue.admin.listener.TestApplicationListener
+com.zhangblue.source.listener.TestApplicationListener
