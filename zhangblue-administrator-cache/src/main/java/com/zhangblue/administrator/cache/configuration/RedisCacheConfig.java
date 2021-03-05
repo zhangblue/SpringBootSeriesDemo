@@ -9,6 +9,7 @@ import java.util.Arrays;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
@@ -52,6 +53,7 @@ public class RedisCacheConfig {
   }
 
   @Bean(name = "commodityRedisCacheManager")
+  @Primary
   public RedisCacheManager commodityCacheManager(RedisConnectionFactory redisConnectionFactory) {
 
     RedisCacheWriter redisCacheWriter = RedisCacheWriter
@@ -76,5 +78,7 @@ public class RedisCacheConfig {
       }
     };
   }
+
+
 }
 

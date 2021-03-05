@@ -1,4 +1,4 @@
-package com.zhangblue.spring.data.elasticsearch.mapping;
+package com.zhangblue.spring.data.elasticsearch6.mapping;
 
 import java.util.Date;
 import lombok.Data;
@@ -14,7 +14,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
  * @since 1.0
  **/
 @Data
-@Document(indexName = "index_student", shards = 1, replicas = 0, createIndex = true, refreshInterval = "5s")
+@Document(indexName = "index_student", type = "test_type", shards = 1, replicas = 0, createIndex = true, refreshInterval = "5s")
 public class Student {
 
   @Id
@@ -30,9 +30,6 @@ public class Student {
 
 //  @Field(name = "m_address", type = FieldType.Object)
 //  private Location location;
-
-  @Field(name = "nested")
-  private NestedBean nested_test;
 
 
   public Student() {

@@ -39,7 +39,7 @@
   </root>
 
   <!-- LOG "com.baeldung*" at TRACE level -->
-  <logger name="com.zhangblue.spring.data.elasticsearch" level="info" additivity="false">
+  <logger name="com.zhangblue.spring.data.elasticsearch6" level="info" additivity="false">
 <!--    <appender-ref ref="RollingFile"/>-->
     <appender-ref ref="Console"/>
   </logger>
